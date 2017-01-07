@@ -45,6 +45,17 @@ def main(argv):
                         content = r.text.encode('utf-8')
                         result_root = ET.fromstring(content)
                         classnumber = result_root.xpath(".//*[local-name()='ddc']//*[local-name()='mostPopular']/@sfa")
+
+                        if(len(classnumber)==0):
+                            # print(r.status_code)
+                            # print(r.text)
+                            wi = result_root.xpath(".//*[local-name()='work']/@wi")
+
+                            r = requests.get('http://classify.oclc.org/classify2/Classify?wi=' + wi[0] + '&summary=true')
+                            content = r.text.encode('utf-8')
+                            result_root = ET.fromstring(content)
+                            classnumber = result_root.xpath(".//*[local-name()='ddc']//*[local-name()='mostPopular']/@sfa")
+
                         print(classnumber)
 
 
