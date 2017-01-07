@@ -9,7 +9,16 @@ import os,re,sys,argparse   #built-in
 from lxml import html
 from lxml import etree as ET
 import requests
-import codecs
+import shutil
+
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
 
 def main(argv):
     # argparse
@@ -38,7 +47,7 @@ def main(argv):
                             print("METADATA of " + filename + " does not contain an ISBN. The book is skipped.")
                             # break from main loop iteration
                         print isbn
-                        print filename
+                        print os.path.join(root,filename)
 
                         r = requests.get('http://classify.oclc.org/classify2/Classify?isbn=' + isbn[0] + '&summary=true')
                         #print(r.text)
@@ -57,19 +66,13 @@ def main(argv):
                             classnumber = result_root.xpath(".//*[local-name()='ddc']//*[local-name()='mostPopular']/@sfa")
 
                         print(classnumber)
+                        path2, bookname = os.path.split(root)
+                        path1, authorname = os.path.split(path2)
 
+                        if not os.path.isdir(os.path.join(args.outputLocation,authorname)):
+                            os.makedirs(os.path.join(args.outputLocation,authorname))
 
-                # # Getting rid of namespaces: http://stackoverflow.com/questions/13412496/python-elementtree-module-how-to-ignore-the-namespace-of-xml-files-to-locate-ma
-                # tree = ET.iterparse(os.path.join(root, file))
-                # for _, el in tree:
-                #     if '}' in el.tag:
-                #         el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
-                # root = tree.root
-                # for identifiers in root.iter('identifier'):
-                #     print identifiers.attrib
-                # # with open(os.path.join(root, file), "r") as metadata:
-                # #     for line in metadata:
-                # #         print line,
+                        shutil.copytree(root, os.path.join(args.outputLocation,authorname,bookname))
 
 if __name__ == "__main__":
     main(sys.argv)
