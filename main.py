@@ -66,13 +66,15 @@ def main(argv):
                             classnumber = result_root.xpath(".//*[local-name()='ddc']//*[local-name()='mostPopular']/@sfa")
 
                         print(classnumber)
+                        mainclass = classnumber[0].split(".")[0]
+                        subclass = classnumber[0].split(".")[1]
                         path2, bookname = os.path.split(root)
                         path1, authorname = os.path.split(path2)
 
-                        if not os.path.isdir(os.path.join(args.outputLocation,authorname)):
-                            os.makedirs(os.path.join(args.outputLocation,authorname))
+                        if not os.path.isdir(os.path.join(args.outputLocation,mainclass,subclass,authorname)):
+                            os.makedirs(os.path.join(args.outputLocation,mainclass,subclass,authorname))
 
-                        shutil.copytree(root, os.path.join(args.outputLocation,authorname,bookname))
+                        shutil.copytree(root, os.path.join(args.outputLocation,mainclass,subclass,authorname,bookname))
 
 if __name__ == "__main__":
     main(sys.argv)
