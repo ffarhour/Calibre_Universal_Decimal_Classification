@@ -6,7 +6,8 @@
 # based on the ISBN
 
 import os,re,sys,argparse   #built-in
-import xml.etree.ElementTree as ET
+from lxml import html
+from lxml import etree as ET
 import requests
 import codecs
 
@@ -23,35 +24,28 @@ def main(argv):
     print(args)
 
 
-    #xml namespaces
-    ns = {  'opf': 'http://www.idpf.org/2007/opf',
-            'dc': 'http://purl.org/dc/elements/1.1/'}
-
     for root, dirs, files in os.walk(args.inputLocation):
         for file in files:
             if re.match("metadata.opf", file):
                 print(file)
                 tree = ET.parse(os.path.join(root, file))
                 xmlroot = tree.getroot()
+                # http://stackoverflow.com/questions/14552138/python-elementtree-find-using-a-wildcard
+                isbn = xmlroot.xpath(".//*[local-name()='metadata']//*[local-name()='identifier'][@*[local-name()='scheme']='ISBN']/text()")
+                for filename in os.listdir(root):
+                    if re.match("^.*\.pdf", filename):
+                        if(len(isbn)==0):
+                            print("METADATA of " + filename + " does not contain an ISBN. The book is skipped.")
+                            # break from main loop iteration
+                        print isbn
+                        print filename
 
-                for metadata in xmlroot.findall('opf:metadata', ns):
-                    for identifier in metadata.findall('dc:identifier[@opf:scheme="ISBN"]', ns):
-                        isbn = identifier.text
-                        for filename in os.listdir(root):
-                            if re.match("^.*\.pdf", filename):
-                                print isbn
-                                print filename
-
-
-    r = requests.get('http://classify.oclc.org/classify2/Classify?isbn=0679442723&summary=true')
-    print(r.text)
-    content = r.text.encode('utf-8')
-    result_root = ET.fromstring(content)
-    for child in result_root:
-        print child.tag, child.attrib
-
-    classnumber = result_root.findall(".//ddc")
-    print(classnumber)
+                        r = requests.get('http://classify.oclc.org/classify2/Classify?isbn=' + isbn[0] + '&summary=true')
+                        #print(r.text)
+                        content = r.text.encode('utf-8')
+                        result_root = ET.fromstring(content)
+                        classnumber = result_root.xpath(".//*[local-name()='ddc']//*[local-name()='mostPopular']/@sfa")
+                        print(classnumber)
 
 
                 # # Getting rid of namespaces: http://stackoverflow.com/questions/13412496/python-elementtree-module-how-to-ignore-the-namespace-of-xml-files-to-locate-ma
