@@ -10,6 +10,7 @@ from lxml import html
 from lxml import etree as ET
 import requests
 import shutil
+import errno
 
 def copytree(src, dst, symlinks=False, ignore=None):
     for item in os.listdir(src):
@@ -36,6 +37,7 @@ def main(argv):
     for root, dirs, files in os.walk(args.inputLocation):
         for file in files:
             if re.match("metadata.opf", file):
+                print("\n*-*-*-*-*")
                 print(file)
                 tree = ET.parse(os.path.join(root, file))
                 xmlroot = tree.getroot()
@@ -74,7 +76,19 @@ def main(argv):
                         if not os.path.isdir(os.path.join(args.outputLocation,mainclass,subclass,authorname)):
                             os.makedirs(os.path.join(args.outputLocation,mainclass,subclass,authorname))
 
-                        shutil.copytree(root, os.path.join(args.outputLocation,mainclass,subclass,authorname,bookname))
+                        # http://stackoverflow.com/questions/10047521/how-to-copy-directory-with-all-file-from-c-xxx-yyy-to-c-zzz-in-python
+                        try:
+                            shutil.copytree(root, os.path.join(args.outputLocation,mainclass,subclass,authorname,bookname))
+                        except OSError as exc:
+                            # File already exist
+                            if exc.errno == errno.EEXIST:
+                                print("skipped")
+                                continue
+                            # The dirtory does not exist
+                            if exc.errno == errno.ENOENT:
+                                shutil.copy(root, os.path.join(args.outputLocation,mainclass,subclass,authorname,bookname))
+                            else:
+                                raise
 
 if __name__ == "__main__":
     main(sys.argv)
